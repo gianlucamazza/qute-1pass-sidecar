@@ -4,20 +4,15 @@
 """Tests for NativeProtocolBackend."""
 
 import json
-import os
 import pathlib
 import struct
-import subprocess
 import sys
 import textwrap
-import threading
-import time
 
 import pytest
 
 from sidecar.backends.native_protocol import (
     BackendUnavailable,
-    BrowserVerificationFailed,
     NativeProtocolBackend,
     NativeProtocolError,
 )
@@ -203,11 +198,11 @@ def test_locked_bs_gives_empty_capabilities(monkeypatch, tmp_path):
     locked_bs = tmp_path / "locked_bs.py"
     locked_bs.write_text(
         textwrap.dedent(
-            f"""\
+            """\
             import json, struct, sys
-            LOCKED = {{"lockState": "Locked"}}
-            ONE_ACCOUNT = {{"accounts": [{{"type": "Locked", "content": {{}}}}]}}
-            RESPONSES = {{"NmLockState": LOCKED, "NmRequestAccounts": ONE_ACCOUNT, "NmOfflineStatus": {{"authFailed": False}}}}
+            LOCKED = {"lockState": "Locked"}
+            ONE_ACCOUNT = {"accounts": [{"type": "Locked", "content": {}}]}
+            RESPONSES = {"NmLockState": LOCKED, "NmRequestAccounts": ONE_ACCOUNT, "NmOfflineStatus": {"authFailed": False}}
             def send(msg):
                 p = json.dumps(msg, separators=(",", ":")).encode()
                 sys.stdout.buffer.write(struct.pack("<I", len(p)) + p)
@@ -222,9 +217,9 @@ def test_locked_bs_gives_empty_capabilities(monkeypatch, tmp_path):
                 if msg is None: break
                 cb, inv_type = msg["callbackId"], msg["invocation"]["type"]
                 if inv_type in RESPONSES:
-                    send({{"type": "Success", "content": {{"callbackId": cb, "response": {{"type": inv_type, "content": RESPONSES[inv_type]}}, "browser_state": {{"type": "Known"}}}}}})
+                    send({"type": "Success", "content": {"callbackId": cb, "response": {"type": inv_type, "content": RESPONSES[inv_type]}, "browser_state": {"type": "Known"}}})
                 else:
-                    send({{"type": "BrowserSupport", "content": {{"callbackId": cb, "response": "UnknownInvocation", "browser_state": {{"type": "Known"}}}}}})
+                    send({"type": "BrowserSupport", "content": {"callbackId": cb, "response": "UnknownInvocation", "browser_state": {"type": "Known"}}})
             """
         )
     )
