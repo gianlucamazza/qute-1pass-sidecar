@@ -89,7 +89,7 @@ def patched_backend(
 
     monkeypatch.setattr(op_cli, "OpCliBackend", lambda: op_stub)
 
-    backend = NativeProtocolBackend()
+    backend = NativeProtocolBackend(bs_path=bs_fake)
     backend._op_cli = op_stub  # ensure the stub is used
     return backend
 
@@ -185,7 +185,7 @@ def test_launcher_not_found(monkeypatch, tmp_path):
     bs_fake.touch()
     monkeypatch.setattr(nm_mod, "_BS_PATH", bs_fake)
     with pytest.raises(BackendUnavailable, match="launcher not found"):
-        NativeProtocolBackend()
+        NativeProtocolBackend(bs_path=bs_fake)
 
 
 def test_bs_not_found(monkeypatch, tmp_path):
